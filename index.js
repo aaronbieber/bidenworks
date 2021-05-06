@@ -4,14 +4,14 @@ var GolfSource = require('./data/golf.json');
 var NumberFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
 function getToday() {
-  var today = new Date();
+  let today = new Date();
   today.setUTCHours(0,0,0,0);
 
   return today;
 }
 
 function ordinalOf(i) {
-  var j = i % 10,
+  let j = i % 10,
       k = i % 100;
   if (j == 1 && k != 11) {
     return i + 'st';
@@ -32,16 +32,19 @@ function wholeDatesEqual(date1, date2) {
 }
 
 function translateGolfDates(golfDates) {
-  var out = [];
-  for (var i=0; i<golfDates.length; i++) {
-    var origgolfDatesalDate = new Date(golfDates[i][0]);
-    var newDate = origgolfDatesalDate;
-    origgolfDatesalDate.setFullYear(newDate.getFullYear() + 4);
-    out[i] = { date: new Date(newDate),
-               location: golfDates[i][5] }
+  let out = [];
+  for (const golfDate of golfDates) {
+    let newDate = new Date(golfDate[0]);
+    newDate.setFullYear(newDate.getFullYear() + 4);
+    out.push({ date: newDate,
+               location: golfDate[5] });
   }
 
   return out;
+}
+
+function dateDiffInDays(date1, date2) {
+  return (date2.getTime() - date1.getTime()) / (1000 * 3600 * 24);
 }
 
 function countDates(golfDates, today) {
@@ -49,9 +52,10 @@ function countDates(golfDates, today) {
   var totalCost = 0;
   var todayTripP = false;
   var todayTrip = {};
+  var daysSinceLastTrip = 0;
+  var prevDate = 0;
 
-  for (var i=0; i<golfDates.length; i++) {
-    var golfDate = golfDates[i];
+  for (const golfDate of golfDates) {
     if (today > golfDate['date']) {
       totalTrips++;
     }
@@ -60,12 +64,16 @@ function countDates(golfDates, today) {
       totalTrips++; // Today is never included above.
       todayTrip = golfDate;
       todayTripP = true;
+      daysSinceLastTrip = dateDiffInDays(prevDate['date'], golfDate['date']);
     }
+
+    prevDate = golfDate;
   }
 
   return { total: totalTrips,
            cost: totalTrips * 483221.47651,
-           today: !!Object.keys(todayTrip).length,
+           today: todayTripP,
+           daysSinceLastTrip,
            location: todayTrip['location'] }
 }
 
@@ -80,7 +88,9 @@ if (result.today) {
   var tweet = 'So far, I\'ve saved Americans ' + cost +
       ' by working instead of golfing.\n\n' +
       'Today was Trump\'s ' + ordinalOf(result.total) + ' golf trip, to ' +
-      result.location + '.';
+      result.location + '.\n\n' +
+      'It has been ' + result.daysSinceLastTrip + (result.daysSinceLastTrip > 1 ? ' days' : ' day') +
+      ' since his last stay at a golf club.';
 
   console.log(tweet);
   Twitter.post('statuses/update',
