@@ -1,3 +1,5 @@
+console.log('Biden is going to work...');
+
 var Twit = require('twit');
 var Twitter = new Twit(require('./config.js'));
 var GolfSource = require('./data/golf.json');
@@ -5,7 +7,7 @@ var NumberFormatter = new Intl.NumberFormat('en-US', { style: 'currency', curren
 
 function getToday() {
   let today = new Date();
-  today.setUTCHours(0,0,0,0);
+  today.setHours(0,0,0,0);
 
   return today;
 }
@@ -77,10 +79,7 @@ function countDates(golfDates, today) {
            location: todayTrip['location'] }
 }
 
-var today = new Date();
-today.setHours(0,0,0,0);
-
-var result = countDates(translateGolfDates(GolfSource), today);
+var result = countDates(translateGolfDates(GolfSource), getToday());
 
 if (result.today) {
   var cost = NumberFormatter.format(result.cost);
